@@ -1,0 +1,161 @@
+{
+  "name": "Git Push Deploy",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "git-deploy",
+        "responseMode": "onReceived",
+        "responseData": "firstEntryJson",
+        "options": {
+          "rawBody": true
+        }
+      },
+      "id": "node-webhook",
+      "name": "Git Push Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [240, 300],
+      "webhookId": "git-deploy"
+    },
+    {
+      "parameters": {
+        "jsCode": "const crypto = require('crypto');\n\nconst secret = $env.WEBHOOK_SECRET;\nif (!secret) {\n  throw new Error('WEBHOOK_SECRET not configured');\n}\n\nconst item = $input.first();\nlet rawBody = item.json.rawBody;\n\nif (typeof rawBody === 'object' && rawBody !== null) {\n  rawBody = JSON.stringify(rawBody);\n}\nif (!rawBody && item.json.body) {\n  rawBody = JSON.stringify(item.json.body);\n}\nif (!rawBody) {\n  throw new Error('Raw body unavailable');\n}\n\nconst sigHeader = item.json.headers['x-hub-signature-256'];\nif (!sigHeader) {\n  throw new Error('Signature header missing');\n}\n\nconst expected = 'sha256=' + crypto\n  .createHmac('sha256', secret)\n  .update(rawBody)\n  .digest('hex');\n\nconst expectedBuf = Buffer.from(expected);\nconst actualBuf = Buffer.from(sigHeader);\n\nif (\n  expectedBuf.length !== actualBuf.length ||\n  !crypto.timingSafeEqual(expectedBuf, actualBuf)\n) {\n  throw new Error('Signature mismatch');\n}\n\nreturn $input.all();"
+      },
+      "id": "node-validate-sig",
+      "name": "Validate Signature",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.body.ref }}",
+              "operation": "equal",
+              "value2": "refs/heads/release"
+            }
+          ]
+        }
+      },
+      "id": "node-branch-filter",
+      "name": "Branch Filter",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "branch",
+              "value": "release"
+            },
+            {
+              "name": "repoUrl",
+              "value": "https://github.com/ZeleSorin/pi-cloud.git"
+            },
+            {
+              "name": "localPath",
+              "value": "/mnt/usb/app/pi-cloud"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "node-constants",
+      "name": "Deploy Constants",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [900, 220]
+    },
+    {
+      "parameters": {
+        "command": "if [ -d \"/mnt/usb/app/pi-cloud/.git\" ]; then git -C \"/mnt/usb/app/pi-cloud\" pull origin release >> /var/log/deploy.log 2>&1; else git clone --branch release --single-branch https://github.com/ZeleSorin/pi-cloud.git /mnt/usb/app/pi-cloud >> /var/log/deploy.log 2>&1; fi",
+        "resource": "command"
+      },
+      "id": "node-exec",
+      "name": "Git Pull",
+      "type": "n8n-nodes-base.ssh",
+      "typeVersion": 1,
+      "position": [1120, 220]
+    },
+    {
+      "parameters": {
+        "errorMessage": "Git deploy failed. Check /var/log/deploy.log on the Pi."
+      },
+      "id": "node-error",
+      "name": "Pull Failed",
+      "type": "n8n-nodes-base.stopAndError",
+      "typeVersion": 1,
+      "position": [1340, 340]
+    }
+  ],
+  "connections": {
+    "Git Push Webhook": {
+      "main": [
+        [
+          {
+            "node": "Validate Signature",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Signature": {
+      "main": [
+        [
+          {
+            "node": "Branch Filter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Branch Filter": {
+      "main": [
+        [
+          {
+            "node": "Deploy Constants",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Deploy Constants": {
+      "main": [
+        [
+          {
+            "node": "Git Pull",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Git Pull": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Pull Failed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "tags": []
+}

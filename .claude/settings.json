@@ -1,0 +1,26 @@
+{
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "read -r line; msg=$(echo \"$line\" | grep -o '\"prompt\":\"[^\"]*\"' | sed 's/\"prompt\":\"//;s/\"$//'); printf '## %s\nUser: %s\n' \"$(date '+%Y-%m-%d %H:%M:%S')\" \"$msg\" >> \"C:/Users/sorin/Documents/repos/Octo/session_log.md\" 2>/dev/null || true",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '---' >> \"C:/Users/sorin/Documents/repos/Octo/session_log.md\" 2>/dev/null || true",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  }
+}

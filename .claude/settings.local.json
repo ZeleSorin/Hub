@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(docker exec octo_dashboard_db *)",
+      "Bash(docker exec *)"
+    ]
+  }
+}
