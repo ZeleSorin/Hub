@@ -4,3 +4,6 @@
 [submodule "Dashboard"]
 	path = Dashboard
 	url = https://github.com/ZeleSorin/Dashboard
+[submodule "server"]
+	path = server
+	url = https://github.com/ZeleSorin/server
