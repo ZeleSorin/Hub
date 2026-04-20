@@ -1,0 +1,6 @@
+[submodule "pi-cloud"]
+	path = pi-cloud
+	url = https://github.com/ZeleSorin/pi-cloud
+[submodule "Dashboard"]
+	path = Dashboard
+	url = https://github.com/ZeleSorin/Dashboard
