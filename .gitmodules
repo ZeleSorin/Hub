@@ -7,3 +7,6 @@
 [submodule "server"]
 	path = server
 	url = https://github.com/ZeleSorin/server
+[submodule "CatApp"]
+	path = CatApp
+	url = https://github.com/ZeleSorin/CatApp.git
