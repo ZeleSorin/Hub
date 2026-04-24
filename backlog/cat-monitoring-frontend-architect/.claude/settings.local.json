@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(psql *)",
+      "Bash(where psql *)",
+      "Read(//c/Program Files/**)"
+    ]
+  }
+}
